@@ -72,8 +72,7 @@ public class IcecreamService
     public string GenerateMysteryCoupon()
     {
         // TODO: Complete the line below using _rng.Next(5, 25)
-        int percentage = 0; // REPLACE THIS
-        throw new NotImplementedException(); // Remove this line after implementing the TODO & The missing part of the unit test.
+        int percentage = _rng.Next(5, 25); // REPLACE THIS
         return $"DISCOUNT-{percentage}%";
     }
 
@@ -88,8 +87,8 @@ public class IcecreamService
         if (flavor == null) return;
 
         // TODO: Subtract scoopsSold from flavor.ScoopsInStock and update the record in _db
-        // _db.Update(flavor);
-        throw new NotImplementedException(); // Remove this line after implementing the TODO & The missing part of the unit test.
+        flavor.ScoopsInStock -=  scoopsSold;
+        _db.Update(flavor);
     }
 
     /*
@@ -99,9 +98,8 @@ public class IcecreamService
     public List<FlavorSummaryDto> GetFlavorsAddedAfter(DateTime threshold)
     {
         // TODO: Filter database records by AddedAtUtc >= threshold and IsActive == true
-        throw new NotImplementedException(); // Remove this line after implementing the TODO & The missing part of the unit test.
         return _db.GetTable<FlavorEntity>()
-            .Where(f => f.IsActive /* ADD CONDITION HERE */)
+            .Where(f => f.IsActive && f.AddedAtUtc >= threshold)
             .Select(f => new FlavorSummaryDto(f.Id, f.Name, f.BasePrice, f.ScoopsInStock, f.AddedAtUtc))
             .ToList();
     }
@@ -117,8 +115,14 @@ public class IcecreamService
             .ToList();
 
         // TODO: Loop through staleFlavors, set IsActive = false, call _db.Update(f), and return count retired.
-        throw new NotImplementedException(); // Remove this line after implementing the TODO & The missing part of the unit test.
-        return 0;
+        foreach (var flavor in staleFlavors)
+        {
+            flavor.IsActive = false;
+            _db.Update(flavor);
+
+        }
+
+        return staleFlavors.Count;
     }
 
     /*
@@ -131,7 +135,6 @@ public class IcecreamService
         decimal totalCost = flavor.BasePrice * scoopsPurchased;
 
         // TODO: Return an IcecreamReceiptDto stamped with _clock.UtcNow
-        throw new NotImplementedException(); // Remove this line after implementing the TODO & The missing part of the unit test.
         return new IcecreamReceiptDto(flavor.Id, flavor.Name, scoopsPurchased, totalCost, DateTime.MinValue);
     }
 
@@ -163,11 +166,11 @@ public class IcecreamService
     public int CalculateMeltTimeMinutes()
     {
         double temp = _tempSensor.GetAmbientTemperatureCelsius();
-        throw new NotImplementedException(); // Remove this line after implementing the TODO & The missing part of the unit test.
 
         // TODO: Complete temperature threshold checks
         if (temp >= 30.0) return 5;
-        return 20;
+        if (temp >= 20 && temp < 30) return 12;
+        return 20; 
     }
 
     /*
@@ -178,40 +181,84 @@ public class IcecreamService
     {
         double temp = _tempSensor.GetAmbientTemperatureCelsius();
 
-        throw new NotImplementedException(); // Remove this line after implementing the TODO & The missing part of the unit test.
         // TODO: If temp > 32.0, return basePrice * 0.80m, else return basePrice
+        if (temp > 32.0) return basePrice * 0.80m;
         return basePrice;
     }
 
     // --- BLANK LOGIC EXERCISES FOR FULL TDD (11 - 20) ---
 
     /* Exercise 11: Night Shift Detector (true if hour >= 22 or < 6) */
-    public bool IsNightShift() => throw new NotImplementedException();
+    public bool IsNightShift(int hour)
+    {
+        if (hour >= 22 || hour < 6) return true;
+        return false;
+    }
 
     /* Exercise 12: Issue Raffle Ticket ("TICKET-{number}" via _rng.Next(1000, 9999)) */
-    public string IssueRaffleTicket() => throw new NotImplementedException();
+    public string IssueRaffleTicket()
+    {
+        int number = _rng.Next(1000, 9999);
+        string result = "TICKET-" + number;
+        return result;
+    }
 
     /* Exercise 13: Restock Flavor Scoops in DB */
-    public void RestockScoops(int flavorId, int additionalScoops) => throw new NotImplementedException();
+    public void RestockScoops(int flavorId, int additionalScoops)
+    {
+        var flavor =  _db.GetTable<FlavorEntity>().FirstOrDefault(f => f.Id == flavorId);
+        flavor.ScoopsInStock += additionalScoops;
+        _db.Update(flavor);
+    }
 
     /* Exercise 14: Return sum of ScoopsInStock across all active flavors */
-    public int GetTotalScoopsInStock() => throw new NotImplementedException();
+    public int GetTotalScoopsInStock()
+    {
+       int totalScoopsInStock = _db.GetTable<FlavorEntity>().Where(f => f.IsActive).Sum(f => f.ScoopsInStock);
+       return totalScoopsInStock;
+    }
 
     /* Exercise 15: Free Cone Day Evaluator (true if Month == 7 and Day == 15) */
-    public bool IsFreeConeDay() => throw new NotImplementedException();
+    public bool IsFreeConeDay(int month, int day)
+    {
+        if (month == 7 && day == 15) return true;
+        return false;
+    }
 
     /* Exercise 16: Custom Cone Order Cost ((basePrice + (wantsWaffleCone ? 1.50m : 0m)) * scoops) */
-    public decimal CalculateCustomOrderPrice(decimal basePrice, int scoops, bool wantsWaffleCone) => throw new NotImplementedException();
+    public decimal CalculateCustomOrderPrice(decimal basePrice, int scoops, bool wantsWaffleCone)
+    {
+        return (basePrice + (wantsWaffleCone ? 1.50m : 0m)) * scoops;
+    }
 
     /* Exercise 17: Free Topping Spinner (_rng.Next(0,3) -> Sprinkles, Hot Fudge, Whipped Cream) */
-    public string SpinForFreeTopping() => throw new NotImplementedException();
+    public string SpinForFreeTopping()
+    {
+        int number = _rng.Next(1, 3);
 
+
+        if (number == 0) return "Sprinkles";
+        if (number == 1) return "Hot Fudge"; 
+        return "Whipped Cream";
+        
+    }
     /* Exercise 18: Monday Stock Audit Checklist (true if _clock.UtcNow.DayOfWeek == DayOfWeek.Monday) */
-    public bool IsMondayStockAuditDue() => throw new NotImplementedException();
+    public bool IsMondayStockAuditDue()
+    {
+        return _clock.UtcNow.DayOfWeek == DayOfWeek.Monday;
+    }
 
     /* Exercise 19: Check Fast Melt Condition (true if temp > 28.0 AND CalculateMeltTimeMinutes() < 10) */
-    public bool IsFastMeltHazard() => throw new NotImplementedException();
+    public bool IsFastMeltHazard(int temp)
+    {
+        if (temp > 28 && CalculateMeltTimeMinutes() < 10) return true;
+        return false;
+    }
 
     /* Exercise 20: Cold Day Hot Fudge Promo (true if temp < 15.0°C AND hour >= 12) */
-    public bool IsColdDayPromoActive() => throw new NotImplementedException();
+    public bool IsColdDayPromoActive(int temp, int hour)
+    {
+        if (temp < 15 && hour >= 12) return true;
+        return false;
+    }
 }

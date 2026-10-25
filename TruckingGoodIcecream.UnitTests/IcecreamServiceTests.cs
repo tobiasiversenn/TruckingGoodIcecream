@@ -80,8 +80,9 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
         var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
 
         // TODO Act: Call service.GenerateMysteryCoupon()
+        var result = service.GenerateMysteryCoupon();
         // TODO Assert: Verify coupon equals "DISCOUNT-15%"
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        Assert.Equal("DISCOUNT-15%", result);
     }
 
     /*
@@ -93,14 +94,16 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
     public void SellScoops_UpdatesScoopsInDatabase()
     {
         // TODO Arrange: Create db connection, service, and add a flavor with 20 scoops
+        using var db = _fixture.CreateConnection();
+        var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
+        var flavor = service.AddNewFlavor(new CreateFlavorDto("Chocolate", 10.0m, 20));
         
         // Act provided
-        // service.SellScoops(flavor.Id, scoopsSold: 5);
+        service.SellScoops(flavor.Id, scoopsSold: 5);
 
         // Assert provided
-        // var updated = db.GetTable<FlavorEntity>().First(f => f.Id == flavor.Id);
-        // Assert.Equal(15, updated.ScoopsInStock);
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        var updated = db.GetTable<FlavorEntity>().First(f => f.Id == flavor.Id);
+        Assert.Equal(15, updated.ScoopsInStock);
     }
 
     /*
@@ -125,7 +128,7 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
         var results = service.GetFlavorsAddedAfter(new DateTime(2026, 7, 15, 11, 0, 0, DateTimeKind.Utc));
 
         // TODO Assert: Assert results.Count is 1 and results[0].Name is "Mango"
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        Assert.Equal(results.Count==1, results[0].Name=="Mango");
     }
 
     /*
@@ -142,10 +145,10 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
         db.Insert(new FlavorEntity { Name = "Pumpkin Spice", BasePrice = 4.00m, IsActive = true, AddedAtUtc = new DateTime(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc) });
 
         // TODO Act: Call service.RetireSeasonalFlavors(new DateTime(2026, 7, 1, 0, 0, 0, DateTimeKind.Utc))
+        var retire = service.RetireSeasonalFlavors(new DateTime(2026, 7, 1, 0, 0, 0, DateTimeKind.Utc));
 
         // Assert
-        // Assert.Equal(1, retiredCount);
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        Assert.Equal(1, retire);
     }
 
     /*
@@ -157,6 +160,8 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
     public void PurchaseIcecream_StampsCurrentTimeFromClockStub()
     {
         // TODO Arrange: Freeze clock at 15:45, create service, add flavor "Strawberry" ($3.00)
+        _clockStub.FrozenTime = new DateTime(2026, 7, 15, 15, 45, 0, DateTimeKind.Utc);
+        // var service = new IcecreamService(db, _clockStub, _randomStub, _temp)
 
         // Act & Assert provided
         // var receipt = service.PurchaseIcecream(flavor.Id, scoopsPurchased: 2);
@@ -204,8 +209,9 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
         var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
 
         // TODO Act: Call service.CalculateMeltTimeMinutes()
+        var meltTimeMinutes = service.CalculateMeltTimeMinutes();
         // TODO Assert: Assert result equals expectedMinutes
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        Assert.Equal(expectedMinutes, meltTimeMinutes);
     }
 
     /*
@@ -224,10 +230,10 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
         var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
 
         // TODO Act: Call service.GetHeatwaveAdjustedPrice(basePrice)
+        var adjustedPrice = service.GetHeatwaveAdjustedPrice(basePrice);
 
         // Assert
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
-        // Assert.Equal(expectedPrice, adjustedPrice);
+        Assert.Equal(expectedPrice, adjustedPrice);
     }
 
     // --- FULL TDD BLANK TESTS (11 - 20) ---
@@ -239,7 +245,17 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
     public void IsNightShift_EvaluatesClockHour(int hour, bool expectedResult)
     {
         // TODO: Full TDD Setup (Arrange, Act, Assert)
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        //Arrange 
+        using var db = _fixture.CreateConnection();
+        _clockStub.FrozenTime = new DateTime(2026, 7, 15, hour, 0, 0, DateTimeKind.Utc);
+
+        var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
+        
+        //Act
+        Boolean isNightShift = service.IsNightShift(hour);
+        
+        //Assertg
+        Assert.Equal(expectedResult, isNightShift);
     }
 
     /* Exercise 12: Verify IssueRaffleTicket returns "TICKET-7777" when _randomStub returns 7777 */
@@ -247,7 +263,17 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
     public void IssueRaffleTicket_FormatsTicketFromRandomStub()
     {
         // TODO: Full TDD Setup
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        //Arrange
+        using var db = _fixture.CreateConnection();
+        _randomStub.ValueToReturn = 7777;
+        
+        var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
+
+        //Act
+        var result= service.IssueRaffleTicket();
+
+        //Assert
+        Assert.Equal("TICKET-7777", result);
     }
 
     /* Exercise 13: Verify RestockScoops adds 20 scoops to a flavor starting with 10 */
@@ -255,7 +281,26 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
     public void RestockFlavorScoops_UpdatesScoopsInDatabase()
     {
         // TODO: Full TDD Setup
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        //Arrange
+        using var db = _fixture.CreateConnection();
+        
+        
+        var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
+
+        var flavor = new FlavorEntity()
+        {
+            ScoopsInStock = 10
+        };
+        db.Insert(flavor);
+        
+        var id = db.GetTable<FlavorEntity>().First(f => f.ScoopsInStock == 10).Id;
+
+        //Act
+        service.RestockScoops(id, 20);
+
+        //Assert
+        var totalFlavors = db.GetTable<FlavorEntity>().First(f => f.Id == id).ScoopsInStock;
+        Assert.Equal(30, totalFlavors);
     }
 
     /* Exercise 14: Verify GetTotalScoopsInStock sums 20 + 30 = 50 across active flavors */
@@ -263,7 +308,29 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
     public void GetTotalScoopsInStock_SumsAllActiveFlavorStock()
     {
         // TODO: Full TDD Setup
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        //Arrange
+        using var db = _fixture.CreateConnection();
+        
+        var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
+
+        var flavor = new FlavorEntity()
+        {
+            ScoopsInStock = 20
+        };
+
+        var flavor2 = new FlavorEntity()
+        {
+            ScoopsInStock = 30
+        };
+        db.Insert(flavor);
+        db.Insert(flavor2);
+        
+        //Act
+        int totalScoopsInStock = service.GetTotalScoopsInStock();
+        
+        
+        //Assert
+        Assert.Equal(50, totalScoopsInStock);
     }
 
     /* Exercise 15: Verify IsFreeConeDay returns true for July 15 and false for Aug 20 */
@@ -272,8 +339,22 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
     [InlineData(8, 20, false)]
     public void IsFreeConeDay_ValidatesCalendarDate(int month, int day, bool expected)
     {
+        
         // TODO: Full TDD Setup
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        //Arrange
+        using var db = _fixture.CreateConnection();
+        _clockStub.FrozenTime = new DateTime(2026,  month, day, 0, 0, 0, DateTimeKind.Utc);    
+
+        var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
+        
+        
+        //Act
+        Boolean isFreeConeDay = service.IsFreeConeDay(month, day);
+        
+        //Assert
+        Assert.Equal(expected, isFreeConeDay);
+        
+        
     }
 
     /* Exercise 16: Verify CalculateCustomOrderPrice waffle cone surcharge calculation */
@@ -283,7 +364,17 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
     public void CalculateCustomOrderPrice_AddsWaffleConeSurcharge(decimal basePrice, int scoops, bool waffle, decimal expected)
     {
         // TODO: Full TDD Setup
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        //Arrange 
+        using var db = _fixture.CreateConnection();
+        var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
+        
+        //Act 
+        decimal result = service.CalculateCustomOrderPrice(basePrice, scoops, waffle);
+        
+        
+        //Assert
+        Assert.Equal(expected, result);
+
     }
 
     /* Exercise 17: Verify SpinForFreeTopping maps index 1 to "Hot Fudge" */
@@ -291,7 +382,18 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
     public void SpinForFreeTopping_MapsRandomIndexToToppingName()
     {
         // TODO: Full TDD Setup
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        //Arrange
+        using var db =  _fixture.CreateConnection();
+        _randomStub.ValueToReturn = 1;
+        var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
+        
+        //Act
+        string result = service.SpinForFreeTopping();
+
+        //Assert
+        Assert.Equal("Hot Fudge", result);
+
+
     }
 
     /* Exercise 18: Verify IsMondayStockAuditDue returns true when clock is frozen on a Monday */
@@ -299,7 +401,19 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
     public void IsMondayStockAuditDue_ReturnsTrueOnMondays()
     {
         // TODO: Full TDD Setup
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        //Arrange
+        using var db = _fixture.CreateConnection();
+        var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
+        
+        _clockStub.FrozenTime = new DateTime(2026, 1, 12, 10, 0, 0, DateTimeKind.Utc);
+
+        //Act
+       var result = service.IsMondayStockAuditDue();
+
+
+        //Assert
+        Assert.True(result);
+
     }
 
     /* Exercise 19: Verify IsFastMeltHazard returns true when ambient temp is 35.0°C */
@@ -307,7 +421,19 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
     public void IsFastMeltHazard_ReturnsTrueWhenTemperatureIsHigh()
     {
         // TODO: Full TDD Setup
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        //Arrange
+        using var db = _fixture.CreateConnection();
+        _tempStub.TemperatureToReturn = 35;
+        
+        
+        var service = new IcecreamService(db,  _clockStub, _randomStub, _tempStub);
+        
+        //Act
+        Boolean result = service.IsFastMeltHazard(35);
+        
+        //Assert 
+        Assert.True(result);
+
     }
 
     /* Exercise 20: Verify IsColdDayPromoActive returns true when temp is 10.0°C at 2 PM */
@@ -315,6 +441,16 @@ public class IcecreamServiceTests : IClassFixture<TestDatabaseFixture>
     public void IsColdDayPromoActive_ReturnsTrueOnColdAfternoons()
     {
         // TODO: Full TDD Setup
-        Assert.Fail("Test incomplete! Remove this line after writing the Arrange, Act, and Assert steps.");
+        //Arrange
+        using var db = _fixture.CreateConnection();
+        _tempStub.TemperatureToReturn = 10;
+        _clockStub.FrozenTime = new DateTime(2026,  1, 10, 12, 0, 0, DateTimeKind.Utc);
+        var service = new IcecreamService(db, _clockStub, _randomStub, _tempStub);
+        
+        //Act
+        Boolean result = service.IsColdDayPromoActive(10, 14);
+
+        //Assert
+        Assert.True(result);
     }
 }
